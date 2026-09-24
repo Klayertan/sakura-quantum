@@ -69,7 +69,7 @@ def set_target(name):
 def run_circuit(circuit, n, shots, layers, seed):
     if circuit == "ghz":
         counts = cudaq.sample(ghz, n, shots_count=shots)
-        ok = set(counts.keys()) <= {"0" * n, "1" * n}
+        ok = {k for k, _ in counts.items()} <= {"0" * n, "1" * n}
     elif circuit == "qft":
         angles = [math.pi / 2**k for k in range(n)]
         counts = cudaq.sample(qft, n, angles, shots_count=shots)
@@ -89,6 +89,18 @@ def gpu_name():
         return out.stdout.strip().splitlines()[0] if out.returncode == 0 else ""
     except (OSError, IndexError, subprocess.TimeoutExpired):
         return ""
+
+
+def memory_limit_bytes(tname):
+    """Memory the state vector must fit in: GPU memory for nvidia targets, host RAM for qpp-cpu."""
+    try:
+        if tname.startswith("nvidia"):
+            out = subprocess.run(["nvidia-smi", "--query-gpu=memory.total", "--format=csv,noheader,nounits"],
+                                 capture_output=True, text=True, timeout=10)
+            return int(out.stdout.strip().splitlines()[0]) * 2**20  # MiB
+        return os.sysconf("SC_PAGE_SIZE") * os.sysconf("SC_PHYS_PAGES")
+    except (OSError, ValueError, IndexError, subprocess.TimeoutExpired):
+        return None
 
 
 def main():
@@ -124,11 +136,21 @@ def main():
             print(f"[skip] target {tname}: {e}", flush=True)
             continue
         bpa = TARGETS[tname][2]
+        limit = memory_limit_bytes(tname) if bpa else None
         for circuit in args.circuits.split(","):
             run_circuit(circuit, 4, 10, 2, 0)  # warm-up: JIT compile outside the timed region
             for n in range(args.min, args.max + 1, args.step):
                 row = dict(target=tname, circuit=circuit, qubits=n, cpu_count=os.cpu_count(),
                            gpu=gpu, state_bytes=(2**n) * bpa if bpa else "")
+                # An out-of-memory allocation can abort the whole process instead of raising,
+                # so record the memory wall without attempting it.
+                if limit and row["state_bytes"] > 0.9 * limit:
+                    row.update(seconds="", check_ok="",
+                               status=f"skipped: state {row['state_bytes'] / 2**30:.0f} GiB > memory {limit / 2**30:.0f} GiB")
+                    w.writerow(row)
+                    f.flush()
+                    print(f"{tname:12s} {circuit:7s} n={n:3d} {row['status']}", flush=True)
+                    break
                 t0 = time.perf_counter()
                 try:
                     ok = run_circuit(circuit, n, args.shots, args.layers, seed=n)

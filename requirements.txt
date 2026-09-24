@@ -1,3 +1,6 @@
-cudaq
-cudaq-solvers
-pyscf
+# Pinned to one CUDA 12 build. The unsuffixed `cudaq` meta-package now resolves to the CUDA 13
+# build (needs a newer host driver) while cudaq-solvers 0.6.0 pulls the CUDA 12 one; installing
+# both leaves two copies of the `cudaq` module in one environment.
+cuda-quantum-cu12==0.14.2
+cudaq-solvers-cu12==0.6.0
+pyscf==2.14.0

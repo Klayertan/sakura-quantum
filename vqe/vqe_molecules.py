@@ -103,7 +103,7 @@ def main():
             r = run_vqe(geometry, active, args.optimizer)
             r.update(molecule=name, target=tname, hf_energy=hf, exact_energy=exact,
                      active_space=active, error=abs(r["vqe_energy"] - exact))
-            r["chemically_accurate"] = r["error"] < CHEMICAL_ACCURACY
+            r["chemically_accurate"] = bool(r["error"] < CHEMICAL_ACCURACY)
             results["molecules"].append(r)
             save()
             print(f"{tname:12s} {name:5s} q={r['qubits']:2d} params={r['parameters']:3d} "
