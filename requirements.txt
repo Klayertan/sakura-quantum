@@ -1,0 +1,3 @@
+cudaq
+cudaq-solvers
+pyscf
