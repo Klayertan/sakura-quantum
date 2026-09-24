@@ -10,7 +10,7 @@ Simulating a quantum computer on the Sakura Internet 高火力 DOK GPU cloud wit
 Linux / WSL:
 ```bash
 python3 -m venv ~/cq && ~/cq/bin/pip install -r requirements.txt pandas matplotlib
-~/cq/bin/python -m pip show cudaq | head -2
+~/cq/bin/python -m pip show cuda-quantum-cu12 | head -2
 PATH=~/cq/bin:$PATH ./run.sh smoke        # writes results/
 ```
 
