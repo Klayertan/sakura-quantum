@@ -1,3 +1,7 @@
 results/
 __pycache__/
 *.pyc
+# PySCF scratch files written by cudaq_solvers.create_molecule
+*-pyscf.chk
+*-pyscf.log
+*_metadata.json
