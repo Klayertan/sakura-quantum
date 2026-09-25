@@ -15,13 +15,14 @@ import time
 import cudaq
 
 
+# No explicit mz(): cudaq.sample measures every qubit at the end on its own, and explicit
+# measurements take a slower path on the GPU simulators.
 @cudaq.kernel
 def ghz(n: int):
     q = cudaq.qvector(n)
     h(q[0])
     for i in range(n - 1):
         x.ctrl(q[i], q[i + 1])
-    mz(q)
 
 
 @cudaq.kernel
@@ -34,7 +35,6 @@ def qft(n: int, angles: list[float]):
         h(q[i])
         for j in range(i + 1, n):
             r1.ctrl(angles[j - i], q[j], q[i])
-    mz(q)
 
 
 @cudaq.kernel
@@ -46,7 +46,6 @@ def random_layers(n: int, layers: int, thetas: list[float]):
             rz(thetas[(l * n + i) * 2 + 1], q[i])
         for i in range(n - 1):
             x.ctrl(q[i], q[i + 1])
-    mz(q)
 
 
 # name -> (cudaq target, target option, bytes per amplitude)
@@ -89,6 +88,9 @@ def gpu_name():
         return out.stdout.strip().splitlines()[0] if out.returncode == 0 else ""
     except (OSError, IndexError, subprocess.TimeoutExpired):
         return ""
+
+
+MEMORY_FRACTION = 0.4
 
 
 def memory_limit_bytes(tname):
@@ -143,8 +145,10 @@ def main():
                 row = dict(target=tname, circuit=circuit, qubits=n, cpu_count=os.cpu_count(),
                            gpu=gpu, state_bytes=(2**n) * bpa if bpa else "")
                 # An out-of-memory allocation can abort the whole process instead of raising,
-                # so record the memory wall without attempting it.
-                if limit and row["state_bytes"] > 0.9 * limit:
+                # so record the memory wall without attempting it. Sampling needs working memory
+                # beyond the state vector: on an 80 GB H100 a 32 GiB state (fp32 n=32, fp64 n=31)
+                # segfaulted while 16 GiB ran fine, so allow the state 40% of device memory.
+                if limit and row["state_bytes"] > MEMORY_FRACTION * limit:
                     row.update(seconds="", check_ok="",
                                status=f"skipped: state {row['state_bytes'] / 2**30:.0f} GiB > memory {limit / 2**30:.0f} GiB")
                     w.writerow(row)

@@ -8,6 +8,7 @@ import json
 import os
 
 import matplotlib
+import matplotlib.ticker
 
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt  # noqa: E402
@@ -60,7 +61,7 @@ def memory_wall(out):
 
 def scaling(results, out):
     path = os.path.join(results, "scaling.csv")
-    if not os.path.exists(path):
+    if not os.path.exists(path) or os.path.getsize(path) == 0:  # empty when that run crashed
         return
     df = pd.read_csv(path)
     ok = df[df.status == "ok"]
@@ -76,7 +77,9 @@ def scaling(results, out):
         ax.set_title(c.upper(), loc="left", fontsize=12)
         ax.set_xlabel("qubits n")
     axes[0].set_ylabel("wall time (s, log)")
-    axes[-1].legend(loc="upper left")
+    # one legend for every target, even ones missing from the last panel
+    handles = {l.get_label(): l for ax in axes for l in ax.get_lines()}
+    axes[0].legend(handles.values(), handles.keys(), loc="upper left")
     save(fig, out, "scaling_time.png")
 
     # speedup = CPU time / GPU time at the same n
@@ -93,6 +96,7 @@ def scaling(results, out):
     ax.set_yscale("log")
     ax.set_xlabel("qubits n")
     ax.set_ylabel("speedup: CPU time / GPU fp32 time")
+    ax.xaxis.set_major_locator(matplotlib.ticker.MaxNLocator(integer=True))
     ax.set_title("GPU speedup over CPU", loc="left", fontsize=12)
     ax.legend(loc="upper left")
     save(fig, out, "speedup.png")
@@ -104,7 +108,7 @@ def scaling(results, out):
 
 def tensornet(results, out):
     path = os.path.join(results, "tensornet.csv")
-    if not os.path.exists(path):
+    if not os.path.exists(path) or os.path.getsize(path) == 0:  # empty when that run crashed
         return
     df = pd.read_csv(path)
     ok = df[df.status == "ok"]
