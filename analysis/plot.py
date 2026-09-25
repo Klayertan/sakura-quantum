@@ -60,7 +60,7 @@ def memory_wall(out):
 
 def scaling(results, out):
     path = os.path.join(results, "scaling.csv")
-    if not os.path.exists(path):
+    if not os.path.exists(path) or os.path.getsize(path) == 0:  # empty when that run crashed
         return
     df = pd.read_csv(path)
     ok = df[df.status == "ok"]
@@ -104,7 +104,7 @@ def scaling(results, out):
 
 def tensornet(results, out):
     path = os.path.join(results, "tensornet.csv")
-    if not os.path.exists(path):
+    if not os.path.exists(path) or os.path.getsize(path) == 0:  # empty when that run crashed
         return
     df = pd.read_csv(path)
     ok = df[df.status == "ok"]
