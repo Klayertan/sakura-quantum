@@ -31,6 +31,20 @@
 - 4 vCPU / メモリ 54GB。qpp-cpu 20 qubit：GHZ 3.8 s、QFT 38.2 s、random 108.7 s（手元の 4 コアより約 2 倍遅い）
 - GPU ターゲットは segfault、VQE は ImportError（上記）
 
+### DOK smoke（h100-80gb, 2026-09-25, 2 回実行）
+- 20 vCPU / メモリ 216GB、`GPUs visible: 1`。実行時間 6 分 35 秒（約 110 円）
+- 20 qubit の CPU（qpp-cpu, 20 vCPU）vs GPU（nvidia fp32）:
+  - GHZ 0.95 s → 0.038 s（約 25 倍）
+  - QFT 8.13 s → 0.14 s（約 58 倍）/ 2 回目 8.16 s → 0.11 s（約 75 倍）
+  - random(10層) 17.6 s → 0.31 s（約 57 倍）/ 2 回目 16.0 s → 0.34 s（約 47 倍）
+  - GPU は 4〜20 qubit でほぼ横ばい（0.03〜0.3 s）＝この規模ではオーバーヘッドが支配的
+- H2 VQE（qpp-cpu）：-1.137176 Ha、44 反復、23 s（手元 4 コアの 7.8 s より遅い。小さな問題はコア数より 1 コアの速さ）
+- **LiH VQE（nvidia-fp64）：94 評価で 182 s = 1.94 s/評価**。CPU（4 コア手元）の 3.7 s/評価とあまり変わらない。12 qubit では GPU の強みが出ない → 第 3 回のネタ
+  - エネルギー -7.862027 Ha は手元 CPU の 100 反復の結果と完全一致（再現性 OK）
+  - `--max-iterations 20` でも COBYLA は「パラメータ数 + 2」回（= 94）までは評価する（`Invalid MAXFUN` 警告）
+- 同じ smoke を 2 回実行：LiH 182.05 s / 182.80 s と、ばらつきはごく小さい
+- ミス：コピーして新規作成した時にコマンドを `smoke` のまま実行してしまった（約 110 円）。コピー時はコマンド欄を必ず確認
+
 ### スモークテスト（4コア Linux, GPU なし, CUDA-Q 0.14.2）
 - qpp-cpu 20 qubit：GHZ 1.8 s、QFT 17.8 s、random(10層) 49.5 s。16→20 qubit でランダム回路は約 23 倍
 - H2 VQE -1.137176 Ha（FCI との差 4.9e-10, 44 反復, 7.8 s）
