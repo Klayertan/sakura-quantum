@@ -48,7 +48,7 @@ def reference_energies(geometry, active, basis="sto-3g"):
     return mf.e_tot, exact
 
 
-def run_vqe(geometry, active, optimizer, basis="sto-3g"):
+def run_vqe(geometry, active, optimizer, max_iterations, basis="sto-3g"):
     kwargs = dict(casci=False, verbose=False)
     if active:
         kwargs.update(nele_cas=active[0], norb_cas=active[1])
@@ -67,10 +67,12 @@ def run_vqe(geometry, active, optimizer, basis="sto-3g"):
     n_params = solvers.stateprep.get_num_uccsd_parameters(n_electrons, n_qubits, spin)
     t0 = time.perf_counter()
     energy, params, history = solvers.vqe(ansatz, molecule.hamiltonian, [0.0] * n_params,
-                                          optimizer=optimizer)
+                                          optimizer=optimizer, max_iterations=max_iterations)
     seconds = time.perf_counter() - t0
     return dict(vqe_energy=energy, qubits=n_qubits, electrons=n_electrons,
-                parameters=n_params, iterations=len(history), seconds=round(seconds, 3))
+                hamiltonian_terms=molecule.hamiltonian.term_count, parameters=n_params,
+                iterations=len(history), hit_iteration_cap=len(history) >= max_iterations,
+                seconds=round(seconds, 3), seconds_per_iteration=round(seconds / max(len(history), 1), 5))
 
 
 def main():
@@ -78,6 +80,9 @@ def main():
     p.add_argument("--targets", default="nvidia-fp64")
     p.add_argument("--molecules", default="H2,LiH,BeH2,N2")
     p.add_argument("--optimizer", default="cobyla")
+    p.add_argument("--max-iterations", type=int, default=3000,
+                   help="optimizer iteration cap; COBYLA's default tolerance otherwise runs for hours "
+                        "on LiH-sized problems (~4 s/iteration on a 4-core CPU)")
     p.add_argument("--h2-curve-points", type=int, default=15,
                    help="points on the H2 dissociation curve (0 to skip)")
     p.add_argument("--out", default=os.environ.get("SAKURA_ARTIFACT_DIR", "results"))
@@ -100,15 +105,15 @@ def main():
         for name in args.molecules.split(","):
             geometry, active = MOLECULES[name]
             hf, exact = reference_energies(geometry, active)
-            r = run_vqe(geometry, active, args.optimizer)
+            r = run_vqe(geometry, active, args.optimizer, args.max_iterations)
             r.update(molecule=name, target=tname, hf_energy=hf, exact_energy=exact,
                      active_space=active, error=abs(r["vqe_energy"] - exact))
-            r["chemically_accurate"] = r["error"] < CHEMICAL_ACCURACY
+            r["chemically_accurate"] = bool(r["error"] < CHEMICAL_ACCURACY)
             results["molecules"].append(r)
             save()
             print(f"{tname:12s} {name:5s} q={r['qubits']:2d} params={r['parameters']:3d} "
                   f"VQE={r['vqe_energy']:.6f} exact={exact:.6f} err={r['error']:.2e} "
-                  f"{r['seconds']}s", flush=True)
+                  f"iters={r['iterations']} {r['seconds']}s", flush=True)
 
     # H2 dissociation curve on the last target: where HF fails and VQE keeps up with FCI
     n = args.h2_curve_points
@@ -116,7 +121,7 @@ def main():
         d = 0.3 + (2.5 - 0.3) * k / max(n - 1, 1)
         geometry = [("H", (0.0, 0.0, 0.0)), ("H", (0.0, 0.0, d))]
         hf, exact = reference_energies(geometry, None)
-        r = run_vqe(geometry, None, args.optimizer)
+        r = run_vqe(geometry, None, args.optimizer, args.max_iterations)
         results["h2_curve"].append(dict(distance=round(d, 4), hf_energy=hf, exact_energy=exact,
                                         vqe_energy=r["vqe_energy"]))
         save()

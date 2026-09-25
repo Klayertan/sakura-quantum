@@ -14,7 +14,7 @@
 - 量子コンピュータに興味はあるけれど、まだ触ったことがないエンジニア
 - 研究で GPU が必要で、さくらの GPU を借りるとどうなるか知りたい人
 
-コード一式は GitHub で公開しています：【TODO: リポジトリURL】
+コード一式は GitHub で公開しています：https://github.com/Klayertan/sakura-quantum
 
 ---
 
@@ -109,7 +109,7 @@ print(cudaq.sample(ghz, 20))
 ```
 sakura-quantum/
   Dockerfile
-  requirements.txt      # cudaq, cudaq-solvers, pyscf
+  requirements.txt      # cuda-quantum-cu12, cudaq-solvers-cu12, pyscf（バージョン固定）
   run.sh                # エントリポイント（smoke / bench / vqe / all）
   bench/scaling.py      # 第2回のベンチマーク
   vqe/vqe_molecules.py  # 第3回の量子化学計算
@@ -120,7 +120,7 @@ sakura-quantum/
 ```dockerfile
 FROM python:3.12-slim
 
-RUN apt-get update && apt-get install -y --no-install-recommends procps \
+RUN apt-get update && apt-get install -y --no-install-recommends procps libgfortran5 \
     && rm -rf /var/lib/apt/lists/*
 
 COPY requirements.txt /app/requirements.txt
@@ -136,7 +136,19 @@ ENTRYPOINT ["/app/run.sh"]
 CMD ["all"]
 ```
 
-ポイントは、**CUDA 入りの重いベースイメージが不要**なことです。`pip install cudaq` で CUDA ランタイムも一緒に入り、GPU ドライバは DOK のホスト側から提供されます。
+ポイントは、**CUDA 入りの重いベースイメージが不要**なことです。pip で CUDA-Q を入れると CUDA ランタイムも一緒に入り、GPU ドライバは DOK のホスト側から提供されます。
+
+> **ハマりどころ①：`pip install cudaq` は使わない**
+> 2026年9月時点で、`cudaq` パッケージは CUDA 13 版（`cuda-quantum-cu13` 0.16）を入れますが、化学計算用の `cudaq-solvers` 0.6.0 は CUDA 12 版（`cuda-quantum-cu12` 0.14）を要求します。両方を一緒に入れると **`import cudaq` できるモジュールが2つ同じ環境に入ってしまう**ので、`requirements.txt` では CUDA 12 版に揃えて固定しました。
+>
+> ```
+> cuda-quantum-cu12==0.14.2
+> cudaq-solvers-cu12==0.6.0
+> pyscf==2.14.0
+> ```
+>
+> **ハマりどころ②：`libgfortran5` が必要**
+> `cudaq-solvers` は `libgfortran.so.5` を使いますが、wheel には含まれていません。slim イメージでは `import cudaq_solvers` が失敗するので、Dockerfile で `apt-get install libgfortran5` しています。
 
 ### 結果は `/opt/artifact` に書く
 
@@ -150,7 +162,7 @@ OUT="${SAKURA_ARTIFACT_DIR:-$PWD/results}"   # DOK 上なら /opt/artifact、ロ
 
 ## 4. まずはローカル（CPU）で動作確認
 
-GPU の時間を無駄にしないよう、まず手元の PC で小さく動かします。筆者の環境は GPU なしの Windows ノートなので、WSL（Ubuntu 24.04）を使いました。
+GPU の時間を無駄にしないよう、まず GPU なしの環境で小さく動かします。以下の出力は 4 コア・メモリ 16GB の Linux 環境（GPU なし）で取ったものです。Windows なら WSL（Ubuntu 24.04）で同じ手順が使えます。
 
 ```bash
 python3 -m venv ~/cq
@@ -163,10 +175,44 @@ PATH=~/cq/bin:$PATH ./run.sh smoke
 実行結果：
 
 ```
-【TODO: スモークテストの出力を貼る】
+=== job=smoke start 2026-09-24T17:02:19+00:00 ===
+no nvidia-smi (CPU only)
+cudaq CUDA-Q Version 0.14.2
+qpp-cpu      ghz     n=  4      0.023s ok
+qpp-cpu      ghz     n=  8     0.0202s ok
+qpp-cpu      ghz     n= 12     0.0222s ok
+qpp-cpu      ghz     n= 16     0.0865s ok
+qpp-cpu      ghz     n= 20     1.8101s ok
+qpp-cpu      qft     n=  4      0.024s ok
+qpp-cpu      qft     n=  8     0.0347s ok
+qpp-cpu      qft     n= 12      0.071s ok
+qpp-cpu      qft     n= 16     0.6436s ok
+qpp-cpu      qft     n= 20    17.7722s ok
+qpp-cpu      random  n=  4     0.0399s ok
+qpp-cpu      random  n=  8     0.0579s ok
+qpp-cpu      random  n= 12     0.1489s ok
+qpp-cpu      random  n= 16     2.1262s ok
+qpp-cpu      random  n= 20     49.488s ok
+[skip] target nvidia: Invalid simulator requested: cusvsim_fp32
+qpp-cpu      H2    q= 4 params=  3 VQE=-1.137176 exact=-1.137176 err=4.86e-10 iters=44 7.781s
+H2 d=0.300  HF=-0.593828 VQE=-0.601804 FCI=-0.601804
+H2 d=1.400  HF=-0.941481 VQE=-1.015468 FCI=-1.015468
+H2 d=2.500  HF=-0.702944 VQE=-0.936055 FCI=-0.936055
+[skip] target nvidia-fp64: Invalid simulator requested: cusvsim_fp64
+=== job=smoke end 2026-09-24T17:04:32+00:00 ===
 ```
 
-GHZ 回路の結果が「全部 0」と「全部 1」だけになっていること、H2 分子の VQE エネルギーが厳密解（約 -1.137 Hartree）と一致していることを確認できました。
+確認できたこと：
+
+- GHZ 回路の測定結果が「全部 0」と「全部 1」だけになっている（CSV の `check_ok` 列が `True`）
+- H2 分子の VQE エネルギーが **-1.137176 Hartree** で、厳密解（FCI）との差は **5×10⁻¹⁰ Hartree**。化学的精度（1.6×10⁻³）を大きく下回ります
+- 原子間距離 2.5Å まで引き伸ばすと、古典的な近似（Hartree-Fock）は厳密解から 0.23 Hartree もずれますが、VQE はぴったり一致
+- GPU ターゲット（`nvidia`）は GPU がないので自動でスキップ
+
+一方で CPU の限界もすでに見えています。**量子ビットを 16 → 20 に 4 つ増やしただけで、ランダム回路は 2.1 秒 → 49 秒（約 23 倍）**。これが次回 GPU で試す部分です。
+
+> **ハマりどころ③：VQE の反復回数に上限を**
+> 少し大きい LiH 分子（12 量子ビット・パラメータ 92 個）を CPU で試したところ、エネルギー評価 1 回に約 4 秒かかり、最適化（COBYLA）100 回でもまだ厳密解から 20 mHa ずれていました。既定の設定だと収束まで何時間もかかるので、課金される GPU で走らせる前に `--max-iterations` で上限を付けました。CPU と GPU の比較も「収束まで」ではなく「20 回あたりの時間」で測ります。
 
 ---
 
@@ -191,7 +237,7 @@ docker push <レジストリ>/sakura-quantum:latest
 |---|---|
 | イメージ | `<レジストリ>/sakura-quantum:latest` |
 | プラン | まずは `v100-32gb`（安い）で `smoke`、本番は `h100-80gb` |
-| コマンド | `/app/run.sh smoke`（本番は `/app/run.sh all`） |
+| コマンド | `/app/run.sh smoke`（本番は `/app/run.sh all`）。smoke には GPU で LiH を 20 回だけ回す計測も入っているので、1 回あたりの秒数から本番の料金を見積もれます |
 | レジストリ認証 | プライベートレジストリならユーザー名・パスワード |
 
 【TODO: タスク作成画面のスクリーンショット】

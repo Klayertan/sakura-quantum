@@ -21,9 +21,10 @@ bench() {
 }
 
 vqe() {
-  python vqe/vqe_molecules.py --targets nvidia-fp64 --molecules H2,LiH,BeH2,N2 --out "$OUT"
-  # CPU vs GPU on the same VQE problem
-  python vqe/vqe_molecules.py --targets qpp-cpu,nvidia-fp64 --molecules LiH \
+  python vqe/vqe_molecules.py --targets nvidia-fp64 --molecules H2,LiH,N2,BeH2 --max-iterations 3000 --out "$OUT"
+  # CPU vs GPU on the same VQE problem: a fixed 20 iterations, compared as seconds/iteration
+  # (running the CPU to convergence would take hours of billed GPU-node time)
+  python vqe/vqe_molecules.py --targets qpp-cpu,nvidia-fp64 --molecules LiH --max-iterations 20 \
     --h2-curve-points 0 --tag vqe_cpu_vs_gpu --out "$OUT"
 }
 
@@ -31,6 +32,9 @@ case "$JOB" in
   smoke)
     python bench/scaling.py --targets qpp-cpu,nvidia --min 4 --max 20 --step 4 --tag smoke --out "$OUT"
     python vqe/vqe_molecules.py --targets qpp-cpu --molecules H2 --h2-curve-points 3 --tag smoke_vqe --out "$OUT"
+    # GPU seconds/iteration on LiH, to size the full run before paying for it (skipped without a GPU)
+    python vqe/vqe_molecules.py --targets nvidia-fp64 --molecules LiH --max-iterations 20 \
+      --h2-curve-points 0 --tag smoke_vqe_gpu --out "$OUT"
     ;;
   bench) bench ;;
   vqe) vqe ;;
