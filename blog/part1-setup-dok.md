@@ -1,5 +1,7 @@
 # さくらのGPUで量子コンピュータを「作る」：高火力DOK入門【量子シミュレーション第1回】
 
+> **PR**：筆者はさくらインターネットの学生アンバサダーで、この記事の検証にはアンバサダーとして提供されたクーポンを利用しています。【TODO: アンバサダー規約の表記ルールに合わせて文言を確認】
+
 量子コンピュータ、使ってみたいけど手元にない。実機のクラウドは順番待ちで、結果にもノイズが乗る。
 それなら **GPU の上に量子コンピュータを丸ごと再現してしまおう**、というのがこのシリーズです。
 
@@ -218,31 +220,58 @@ H2 d=2.500  HF=-0.702944 VQE=-0.936055 FCI=-0.936055
 
 ## 5. 高火力 DOK で実行する
 
-### ① イメージをレジストリに push
+### ① コンテナレジストリを作る
 
-```bash
-docker build -t <レジストリ>/sakura-quantum:latest .
-docker push <レジストリ>/sakura-quantum:latest
-```
+イメージの置き場所として、さくらのクラウドの「コンテナレジストリ」を作ります（月額 220 円、ストレージ 5GiB 込み）。コントロールパネルの「グローバル」→「コンテナレジストリ」→「追加」で、
 
-レジストリは、さくらのクラウドの「コンテナレジストリ」（`xxx.sakuracr.jp`）か Docker Hub などが使えます。
+- **名前**：表示用のラベル（例：`sakura-quantum`）
+- **コンテナレジストリ名**：アドレスになる部分。`klayer` と入れると `klayer.sakuracr.jp` になります
+
+作成後、「ユーザ」タブで push 用のユーザーを追加します。
 
 【TODO: コンテナレジストリ作成画面のスクリーンショット】
 
-### ② タスクを作成
+> **ハマりどころ④：「名前」欄にアドレスを入れない**
+> 最初、一番上の「名前」欄に `klayer.sakuracr.jp` と入れてしまいました。アドレスになるのは 2 つ目の「コンテナレジストリ名」の方で、`.sakuracr.jp` は自動で付きます。
+
+### ② イメージのビルドは GitHub Actions に任せる
+
+筆者のノート PC には Docker がありません。CUDA-Q 入りのイメージは数 GB あるので、手元でビルドするより **GitHub Actions でビルドしてレジストリに push** する方が楽です。リポジトリの `.github/workflows/image.yml` がそれで、
+
+1. イメージをビルド
+2. そのイメージで CPU のスモークテストを実行（通らなければ push しない）
+3. さくらのコンテナレジストリに push
+
+を自動で行います。リポジトリの「Settings → Secrets and variables → Actions」に次の 3 つを登録するだけです。
+
+| Secret 名 | 値 |
+|---|---|
+| `SAKURA_REGISTRY` | `klayer.sakuracr.jp` |
+| `SAKURA_REGISTRY_USER` | レジストリのユーザー名 |
+| `SAKURA_REGISTRY_PASSWORD` | そのパスワード |
+
+Docker がある環境なら、もちろん手元でも同じことができます。
+
+```bash
+docker build -t klayer.sakuracr.jp/sakura-quantum:latest .
+docker login klayer.sakuracr.jp
+docker push klayer.sakuracr.jp/sakura-quantum:latest
+```
+
+### ③ タスクを作成
 
 コントロールパネルの「タスク」→「作成」で、以下を設定します。
 
 | 項目 | 設定値 |
 |---|---|
-| イメージ | `<レジストリ>/sakura-quantum:latest` |
+| イメージ | `klayer.sakuracr.jp/sakura-quantum:latest` |
 | プラン | まずは `v100-32gb`（安い）で `smoke`、本番は `h100-80gb` |
 | コマンド | `/app/run.sh smoke`（本番は `/app/run.sh all`）。smoke には GPU で LiH を 20 回だけ回す計測も入っているので、1 回あたりの秒数から本番の料金を見積もれます |
 | レジストリ認証 | プライベートレジストリならユーザー名・パスワード |
 
 【TODO: タスク作成画面のスクリーンショット】
 
-### ③ 結果をダウンロード
+### ④ 結果をダウンロード
 
 タスクが完了すると、「アーティファクト」から `/opt/artifact` の中身を zip でダウンロードできます。`nvidia-smi.txt` に GPU の情報が、`log.txt` に実行ログが入っています。
 
