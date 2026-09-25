@@ -1,0 +1,4 @@
+target,qubits
+qpp-cpu,27
+nvidia,31
+nvidia-fp64,30

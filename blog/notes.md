@@ -51,3 +51,23 @@
 - H2 解離曲線 d=2.5Å：HF -0.7029 / FCI -0.9361（差 0.23 Ha）、VQE は FCI と一致
 
 （DOK 実行後に追記）
+
+### DOK bench 1 回目（h100-80gb, 2026-09-25 18:11, 約 11 分・約 190 円）
+- qpp-cpu は 90 秒上限で GHZ 27 / QFT 23 / random 22 qubit まで
+- **GPU は state が 32 GiB になった所で segfault**：fp32 n=32、fp64 n=31。GHZ で落ちたせいで同じプロセスの QFT・random が走らなかった
+- nvidia-smi：H100 80GB HBM3、81559 MiB、MIG 無効、ドライバ 580.173.02（CUDA 13.0）→ GPU が小さいわけではない
+- → サンプリングで state の約 2.5 倍の作業メモリが要ると判断。ガードを「GPU メモリの 40%」に変更、(target, circuit) ごとに別プロセス、kernel から明示的な mz() を削除
+- tensornet は起動直後に `CUTENSORNET_STATUS_INVALID_VALUE in line 377` で abort（未解決）
+
+### DOK bench 2 回目（h100-80gb, 2026-09-25 19:03, 約 14 分・約 240 円）
+- 全 GPU スイープが segfault なしで完走し、メモリ上限で「skipped」と記録
+- **実用上の上限：fp32 31 qubit / fp64 30 qubit**（理論上は 80GB に 33 / 32 qubit 入るが、サンプリング用の作業領域が必要）
+- CPU で測れた最大の n での比較（CPU 20 vCPU vs H100）:
+  - GHZ 27 qubit：CPU 141.9 s → fp32 0.040 s（**約 3,600 倍**）/ fp64 0.049 s（約 2,900 倍）
+  - QFT 24 qubit：CPU 193.2 s → fp32 0.223 s（約 870 倍）/ fp64 0.171 s（約 1,130 倍）
+  - random 22 qubit：CPU 90.1 s → fp32 0.207 s（約 430 倍）/ fp64 0.310 s（約 290 倍）
+- GPU の最大サイズでも 1 秒前後：fp32 31 qubit で GHZ 0.23 s / QFT 0.73 s / random 1.08 s
+- fp64 は fp32 とほぼ同じ速さ（H100 は倍精度も速い）
+- tensornet は同じエラーで abort → `bench` から外して別ジョブ `tensornet` に
+- データ：`blog/data/h100-bench-2026-09-25/`、グラフ：`blog/images/scaling_time.png`, `speedup.png`
+

@@ -1,5 +1,5 @@
 #!/bin/bash
-# Entrypoint: run.sh [smoke|bench|vqe|all]
+# Entrypoint: run.sh [smoke|bench|tensornet|vqe|all]
 # Results go to $SAKURA_ARTIFACT_DIR (set by 高火力 DOK, /opt/artifact) so they can be downloaded afterwards.
 set -uo pipefail
 cd "$(dirname "$0")"
@@ -34,7 +34,11 @@ bench() {
       run python bench/scaling.py --targets $t --circuits $c --min 10 --max 36 --out "$OUT"
     done
   done
-  # bonus: tensor-network backend on shallow circuits far beyond state-vector memory
+}
+
+tensornet() {
+  # Tensor-network backend on shallow circuits far beyond state-vector memory. Kept out of
+  # `bench`: on the DOK H100 it aborts at once with CUTENSORNET_STATUS_INVALID_VALUE (line 377).
   run python bench/scaling.py --targets tensornet --circuits ghz,random --layers 2 \
     --min 20 --max 100 --step 10 --shots 100 --tag tensornet --out "$OUT"
 }
@@ -57,9 +61,10 @@ case "$JOB" in
       --h2-curve-points 0 --tag smoke_vqe_gpu --out "$OUT"
     ;;
   bench) bench ;;
+  tensornet) tensornet ;;
   vqe) vqe ;;
   all) bench; vqe ;;
-  *) echo "usage: run.sh [smoke|bench|vqe|all]"; exit 2 ;;
+  *) echo "usage: run.sh [smoke|bench|tensornet|vqe|all]"; exit 2 ;;
 esac
 echo "=== job=$JOB end $(date -Is) ==="
 if [ ${#FAILED[@]} -gt 0 ]; then
