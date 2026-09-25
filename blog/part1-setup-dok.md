@@ -265,11 +265,17 @@ docker push klayer.sakuracr.jp/sakura-quantum:latest
 | 項目 | 設定値 |
 |---|---|
 | イメージ | `klayer.sakuracr.jp/sakura-quantum:latest` |
-| プラン | まずは `v100-32gb`（安い）で `smoke`、本番は `h100-80gb` |
+| プラン | `h100-80gb`（V100 は使えません。下の「ハマりどころ」参照） |
 | コマンド | `/app/run.sh smoke`（本番は `/app/run.sh all`）。smoke には GPU で LiH を 20 回だけ回す計測も入っているので、1 回あたりの秒数から本番の料金を見積もれます |
 | レジストリ認証 | プライベートレジストリならユーザー名・パスワード |
 
 【TODO: タスク作成画面のスクリーンショット】
+
+> **ハマりどころ⑤：V100 では GPU シミュレータが動かない**
+> 最初は安い V100（¥0.016/秒）で smoke を流しました。CPU の部分は動いたのに、GPU ターゲット（`nvidia`）に切り替えた瞬間に `Segmentation fault`。原因は、CUDA-Q が内部で使う NVIDIA cuStateVec が **v1.9 で Volta 世代（V100, compute capability 7.0）のサポートを終了**していたことでした。今の CUDA-Q を GPU で動かすなら H100 を選びましょう。
+>
+> **ハマりどころ⑥：新しい Debian だと化学ライブラリが読み込めない**
+> 同じ実行で `ImportError: libcudaq-solvers.so: cannot enable executable stack` も出ました。`python:3.12-slim` のベースが Debian 13 に変わり、glibc 2.41 が「実行可能スタック」を要求するライブラリの読み込みを拒否するようになったためです。ベースイメージを `python:3.12-slim-bookworm`（Debian 12）に固定して解決しました。手元（Ubuntu 24.04, glibc 2.39）では再現しないので気付きにくい罠です。
 
 ### ④ 結果をダウンロード
 
