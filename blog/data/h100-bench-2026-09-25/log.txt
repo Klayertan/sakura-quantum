@@ -1,0 +1,200 @@
+=== job=bench start 2026-09-25T10:03:35+00:00 ===
+name, memory.total [MiB], memory.free [MiB], driver_version
+NVIDIA H100 80GB HBM3, 81559 MiB, 81079 MiB, 580.173.02
+cudaq CUDA-Q Version 0.14.2 (https://github.com/NVIDIA/cuda-quantum 91ab3092e76dab8887d1fdf0c99a2478ca90581c) | GPUs visible: 1
+20
+               total        used        free      shared  buff/cache   available
+Mem:             216           6          45           0         165         209
+qpp-cpu      ghz     n= 10     0.0263s ok
+qpp-cpu      ghz     n= 11     0.0285s ok
+qpp-cpu      ghz     n= 12     0.0299s ok
+qpp-cpu      ghz     n= 13     0.0295s ok
+qpp-cpu      ghz     n= 14     0.0408s ok
+qpp-cpu      ghz     n= 15     0.0576s ok
+qpp-cpu      ghz     n= 16     0.0756s ok
+qpp-cpu      ghz     n= 17     0.1111s ok
+qpp-cpu      ghz     n= 18       0.17s ok
+qpp-cpu      ghz     n= 19     0.3161s ok
+qpp-cpu      ghz     n= 20      0.699s ok
+qpp-cpu      ghz     n= 21     1.5922s ok
+qpp-cpu      ghz     n= 22     3.2035s ok
+qpp-cpu      ghz     n= 23     8.0455s ok
+qpp-cpu      ghz     n= 24    16.2214s ok
+qpp-cpu      ghz     n= 25    32.4949s ok
+qpp-cpu      ghz     n= 26    67.4665s ok
+qpp-cpu      ghz     n= 27   141.9018s ok
+wrote /opt/artifact/scaling.csv
+qpp-cpu      qft     n= 10     0.0548s ok
+qpp-cpu      qft     n= 11     0.0678s ok
+qpp-cpu      qft     n= 12     0.0758s ok
+qpp-cpu      qft     n= 13     0.0975s ok
+qpp-cpu      qft     n= 14     0.1444s ok
+qpp-cpu      qft     n= 15     0.2002s ok
+qpp-cpu      qft     n= 16        0.3s ok
+qpp-cpu      qft     n= 17     0.6292s ok
+qpp-cpu      qft     n= 18     1.2898s ok
+qpp-cpu      qft     n= 19     2.9557s ok
+qpp-cpu      qft     n= 20     6.4831s ok
+qpp-cpu      qft     n= 21    18.3718s ok
+qpp-cpu      qft     n= 22    40.3545s ok
+qpp-cpu      qft     n= 23    89.8912s ok
+qpp-cpu      qft     n= 24   193.1672s ok
+wrote /opt/artifact/scaling.csv
+qpp-cpu      random  n= 10     0.1891s ok
+qpp-cpu      random  n= 11     0.1688s ok
+qpp-cpu      random  n= 12     0.2868s ok
+qpp-cpu      random  n= 13     0.3009s ok
+qpp-cpu      random  n= 14     0.3775s ok
+qpp-cpu      random  n= 15      0.503s ok
+qpp-cpu      random  n= 16     0.8949s ok
+qpp-cpu      random  n= 17     1.8354s ok
+qpp-cpu      random  n= 18     3.7627s ok
+qpp-cpu      random  n= 19     7.3645s ok
+qpp-cpu      random  n= 20    13.9826s ok
+qpp-cpu      random  n= 21     35.401s ok
+qpp-cpu      random  n= 22    90.0935s ok
+wrote /opt/artifact/scaling.csv
+nvidia       ghz     n= 10     0.0323s ok
+nvidia       ghz     n= 11     0.0294s ok
+nvidia       ghz     n= 12     0.0292s ok
+nvidia       ghz     n= 13     0.0296s ok
+nvidia       ghz     n= 14     0.0269s ok
+nvidia       ghz     n= 15     0.0275s ok
+nvidia       ghz     n= 16     0.0291s ok
+nvidia       ghz     n= 17     0.0306s ok
+nvidia       ghz     n= 18     0.0303s ok
+nvidia       ghz     n= 19       0.03s ok
+nvidia       ghz     n= 20     0.0304s ok
+nvidia       ghz     n= 21     0.0342s ok
+nvidia       ghz     n= 22      0.033s ok
+nvidia       ghz     n= 23     0.0326s ok
+nvidia       ghz     n= 24     0.0317s ok
+nvidia       ghz     n= 25     0.0329s ok
+nvidia       ghz     n= 26      0.036s ok
+nvidia       ghz     n= 27     0.0395s ok
+nvidia       ghz     n= 28     0.0459s ok
+nvidia       ghz     n= 29     0.0632s ok
+nvidia       ghz     n= 30     0.0924s ok
+nvidia       ghz     n= 31     0.2327s ok
+nvidia       ghz     n= 32 skipped: state 32 GiB > memory 80 GiB
+wrote /opt/artifact/scaling.csv
+nvidia       qft     n= 10     0.0574s ok
+nvidia       qft     n= 11      0.052s ok
+nvidia       qft     n= 12     0.0581s ok
+nvidia       qft     n= 13     0.0626s ok
+nvidia       qft     n= 14      0.066s ok
+nvidia       qft     n= 15     0.0717s ok
+nvidia       qft     n= 16     0.0799s ok
+nvidia       qft     n= 17     0.1255s ok
+nvidia       qft     n= 18     0.1417s ok
+nvidia       qft     n= 19     0.1338s ok
+nvidia       qft     n= 20      0.155s ok
+nvidia       qft     n= 21     0.1344s ok
+nvidia       qft     n= 22     0.2102s ok
+nvidia       qft     n= 23     0.1712s ok
+nvidia       qft     n= 24     0.2231s ok
+nvidia       qft     n= 25     0.1632s ok
+nvidia       qft     n= 26     0.2175s ok
+nvidia       qft     n= 27     0.2767s ok
+nvidia       qft     n= 28      0.319s ok
+nvidia       qft     n= 29     0.2912s ok
+nvidia       qft     n= 30     0.4532s ok
+nvidia       qft     n= 31     0.7287s ok
+nvidia       qft     n= 32 skipped: state 32 GiB > memory 80 GiB
+wrote /opt/artifact/scaling.csv
+nvidia       random  n= 10     0.1142s ok
+nvidia       random  n= 11      0.127s ok
+nvidia       random  n= 12     0.1369s ok
+nvidia       random  n= 13     0.2207s ok
+nvidia       random  n= 14     0.2573s ok
+nvidia       random  n= 15     0.1949s ok
+nvidia       random  n= 16     0.2071s ok
+nvidia       random  n= 17     0.2555s ok
+nvidia       random  n= 18     0.2005s ok
+nvidia       random  n= 19     0.2922s ok
+nvidia       random  n= 20     0.1766s ok
+nvidia       random  n= 21     0.1966s ok
+nvidia       random  n= 22     0.2075s ok
+nvidia       random  n= 23     0.3004s ok
+nvidia       random  n= 24     0.2301s ok
+nvidia       random  n= 25     0.3045s ok
+nvidia       random  n= 26     0.3372s ok
+nvidia       random  n= 27     0.2953s ok
+nvidia       random  n= 28     0.4337s ok
+nvidia       random  n= 29     0.4989s ok
+nvidia       random  n= 30     0.6427s ok
+nvidia       random  n= 31     1.0782s ok
+nvidia       random  n= 32 skipped: state 32 GiB > memory 80 GiB
+wrote /opt/artifact/scaling.csv
+nvidia-fp64  ghz     n= 10     0.0308s ok
+nvidia-fp64  ghz     n= 11     0.0312s ok
+nvidia-fp64  ghz     n= 12     0.0296s ok
+nvidia-fp64  ghz     n= 13     0.0309s ok
+nvidia-fp64  ghz     n= 14     0.0317s ok
+nvidia-fp64  ghz     n= 15     0.0304s ok
+nvidia-fp64  ghz     n= 16     0.0296s ok
+nvidia-fp64  ghz     n= 17     0.0315s ok
+nvidia-fp64  ghz     n= 18     0.0313s ok
+nvidia-fp64  ghz     n= 19     0.0367s ok
+nvidia-fp64  ghz     n= 20     0.0338s ok
+nvidia-fp64  ghz     n= 21     0.0349s ok
+nvidia-fp64  ghz     n= 22     0.0486s ok
+nvidia-fp64  ghz     n= 23      0.098s ok
+nvidia-fp64  ghz     n= 24      0.065s ok
+nvidia-fp64  ghz     n= 25     0.0552s ok
+nvidia-fp64  ghz     n= 26     0.0435s ok
+nvidia-fp64  ghz     n= 27     0.0486s ok
+nvidia-fp64  ghz     n= 28     0.0605s ok
+nvidia-fp64  ghz     n= 29     0.0888s ok
+nvidia-fp64  ghz     n= 30     0.2121s ok
+nvidia-fp64  ghz     n= 31 skipped: state 32 GiB > memory 80 GiB
+wrote /opt/artifact/scaling.csv
+nvidia-fp64  qft     n= 10     0.0537s ok
+nvidia-fp64  qft     n= 11     0.0515s ok
+nvidia-fp64  qft     n= 12     0.0534s ok
+nvidia-fp64  qft     n= 13      0.061s ok
+nvidia-fp64  qft     n= 14     0.0624s ok
+nvidia-fp64  qft     n= 15      0.068s ok
+nvidia-fp64  qft     n= 16      0.073s ok
+nvidia-fp64  qft     n= 17     0.0796s ok
+nvidia-fp64  qft     n= 18     0.0918s ok
+nvidia-fp64  qft     n= 19     0.1021s ok
+nvidia-fp64  qft     n= 20     0.1048s ok
+nvidia-fp64  qft     n= 21     0.1957s ok
+nvidia-fp64  qft     n= 22     0.1483s ok
+nvidia-fp64  qft     n= 23     0.1932s ok
+nvidia-fp64  qft     n= 24      0.171s ok
+nvidia-fp64  qft     n= 25     0.1571s ok
+nvidia-fp64  qft     n= 26     0.1682s ok
+nvidia-fp64  qft     n= 27     0.1924s ok
+nvidia-fp64  qft     n= 28     0.2819s ok
+nvidia-fp64  qft     n= 29     0.3162s ok
+nvidia-fp64  qft     n= 30     0.5859s ok
+nvidia-fp64  qft     n= 31 skipped: state 32 GiB > memory 80 GiB
+wrote /opt/artifact/scaling.csv
+nvidia-fp64  random  n= 10     0.1104s ok
+nvidia-fp64  random  n= 11     0.1118s ok
+nvidia-fp64  random  n= 12     0.2066s ok
+nvidia-fp64  random  n= 13     0.1716s ok
+nvidia-fp64  random  n= 14      0.212s ok
+nvidia-fp64  random  n= 15     0.2559s ok
+nvidia-fp64  random  n= 16     0.1969s ok
+nvidia-fp64  random  n= 17     0.2717s ok
+nvidia-fp64  random  n= 18     0.1904s ok
+nvidia-fp64  random  n= 19     0.2674s ok
+nvidia-fp64  random  n= 20     0.2173s ok
+nvidia-fp64  random  n= 21     0.2251s ok
+nvidia-fp64  random  n= 22     0.3097s ok
+nvidia-fp64  random  n= 23     0.3645s ok
+nvidia-fp64  random  n= 24     0.3462s ok
+nvidia-fp64  random  n= 25     0.2694s ok
+nvidia-fp64  random  n= 26     0.2614s ok
+nvidia-fp64  random  n= 27     0.3127s ok
+nvidia-fp64  random  n= 28     0.4243s ok
+nvidia-fp64  random  n= 29     0.5479s ok
+nvidia-fp64  random  n= 30     0.8351s ok
+nvidia-fp64  random  n= 31 skipped: state 32 GiB > memory 80 GiB
+wrote /opt/artifact/scaling.csv
+cuTensorNet error CUTENSORNET_STATUS_INVALID_VALUE in line 377
+/app/run.sh: line 20:   790 Aborted                 (core dumped) "$@"
+!!! FAILED (exit 134): python bench/scaling.py --targets tensornet --circuits ghz,random --layers 2 --min 20 --max 100 --step 10 --shots 100 --tag tensornet --out /opt/artifact

@@ -150,7 +150,8 @@ def main():
                 # segfaulted while 16 GiB ran fine, so allow the state 40% of device memory.
                 if limit and row["state_bytes"] > MEMORY_FRACTION * limit:
                     row.update(seconds="", check_ok="",
-                               status=f"skipped: state {row['state_bytes'] / 2**30:.0f} GiB > memory {limit / 2**30:.0f} GiB")
+                               status=f"skipped: state {row['state_bytes'] / 2**30:.0f} GiB > "
+                                      f"{MEMORY_FRACTION:.0%} of {limit / 2**30:.0f} GiB")
                     w.writerow(row)
                     f.flush()
                     print(f"{tname:12s} {circuit:7s} n={n:3d} {row['status']}", flush=True)
