@@ -10,6 +10,7 @@ JOB="${1:-all}"
 exec > >(tee -a "$OUT/log.txt") 2>&1
 echo "=== job=$JOB start $(date -Is) ==="
 nvidia-smi > "$OUT/nvidia-smi.txt" 2>&1 || echo "no nvidia-smi (CPU only)"
+nvidia-smi --query-gpu=name,memory.total,memory.free,driver_version --format=csv 2>/dev/null || true
 python -c "import cudaq; print('cudaq', cudaq.__version__, '| GPUs visible:', cudaq.num_available_gpus())"
 nproc; free -g | head -2
 
@@ -26,9 +27,12 @@ run() {
 }
 
 bench() {
-  # one process per target, so a crash on one simulator does not lose the others (the CSV is appended)
+  # one process per (target, circuit): a crash (e.g. a segfault at the GPU memory limit)
+  # only ends that one sweep, and the CSV is appended so nothing is lost
   for t in qpp-cpu nvidia nvidia-fp64; do
-    run python bench/scaling.py --targets $t --min 10 --max 36 --out "$OUT"
+    for c in ghz qft random; do
+      run python bench/scaling.py --targets $t --circuits $c --min 10 --max 36 --out "$OUT"
+    done
   done
   # bonus: tensor-network backend on shallow circuits far beyond state-vector memory
   run python bench/scaling.py --targets tensornet --circuits ghz,random --layers 2 \
