@@ -1,5 +1,5 @@
 #!/bin/bash
-# Entrypoint: run.sh [smoke|bench|tensornet|vqe|all]
+# Entrypoint: run.sh [smoke|bench|tensornet|vqe|vqe-part1|vqe-beh2|all]
 # Results go to $SAKURA_ARTIFACT_DIR (set by 高火力 DOK, /opt/artifact) so they can be downloaded afterwards.
 set -uo pipefail
 cd "$(dirname "$0")"
@@ -43,13 +43,22 @@ tensornet() {
     --min 20 --max 100 --step 10 --shots 100 --tag tensornet --out "$OUT"
 }
 
-vqe() {
-  run python vqe/vqe_molecules.py --targets nvidia-fp64 --molecules H2,LiH,N2,BeH2 --max-iterations 3000 --out "$OUT"
+# The VQE run is split in two so each DOK task stays a few hours (BeH2 alone takes hours).
+vqe_part1() {
+  # H2, LiH, N2 plus the H2 dissociation curve
+  run python vqe/vqe_molecules.py --targets nvidia-fp64 --molecules H2,LiH,N2 --max-iterations 3000 --out "$OUT"
   # CPU vs GPU on the same VQE problem: a fixed 20 iterations, compared as seconds/iteration
   # (running the CPU to convergence would take hours of billed GPU-node time)
   run python vqe/vqe_molecules.py --targets qpp-cpu,nvidia-fp64 --molecules LiH --max-iterations 20 \
     --h2-curve-points 0 --tag vqe_cpu_vs_gpu --out "$OUT"
 }
+
+vqe_beh2() {
+  run python vqe/vqe_molecules.py --targets nvidia-fp64 --molecules BeH2 --max-iterations 3000 \
+    --h2-curve-points 0 --tag vqe_beh2 --out "$OUT"
+}
+
+vqe() { vqe_part1; vqe_beh2; }
 
 case "$JOB" in
   smoke)
@@ -63,8 +72,10 @@ case "$JOB" in
   bench) bench ;;
   tensornet) tensornet ;;
   vqe) vqe ;;
+  vqe-part1) vqe_part1 ;;
+  vqe-beh2) vqe_beh2 ;;
   all) bench; vqe ;;
-  *) echo "usage: run.sh [smoke|bench|tensornet|vqe|all]"; exit 2 ;;
+  *) echo "usage: run.sh [smoke|bench|tensornet|vqe|vqe-part1|vqe-beh2|all]"; exit 2 ;;
 esac
 echo "=== job=$JOB end $(date -Is) ==="
 if [ ${#FAILED[@]} -gt 0 ]; then
